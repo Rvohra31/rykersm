@@ -82,12 +82,6 @@
     .search-bar {
       width: 100%;
     }
-
-    img, video {
-      max-width: 100%;
-      border-radius: 12px;
-      margin-top: 10px;
-    }
   </style>
 </head>
 <body>
@@ -111,7 +105,7 @@
     if (!content) return alert("You must write something first!");
 
     try {
-      let res = await fetch(BIN_URL, { headers: { 'X-Master-Key': SECRET_KEY }});
+      let res = await fetch(BIN_URL, { headers: { 'X-Master-Key': SECRET_KEY, 'X-Bin-Versioning': 'false' }});
       let data = await res.json();
 
       if (!data.record.posts) data.record.posts = [];
@@ -119,7 +113,11 @@
 
       await fetch(BIN_URL, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'X-Master-Key': SECRET_KEY },
+        headers: { 
+          'Content-Type': 'application/json',
+          'X-Master-Key': SECRET_KEY,
+          'X-Bin-Versioning': 'false'
+        },
         body: JSON.stringify(data.record)
       });
 
@@ -155,6 +153,17 @@
 
   function searchPosts() {
     const query = document.getElementById('searchBar').value.toLowerCase();
+    document.querySelectorAll('.post').forEach(post => {
+      const text = post.innerText.toLowerCase();
+      post.style.display = text.includes(query) ? 'flex' : 'none';
+    });
+  }
+
+  window.onload = loadPosts;
+</script>
+
+</body>
+</html>st query = document.getElementById('searchBar').value.toLowerCase();
     document.querySelectorAll('.post').forEach(post => {
       const text = post.innerText.toLowerCase();
       post.style.display = text.includes(query) ? 'flex' : 'none';
