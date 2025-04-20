@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang=\"en\">
+<html lang="en">
 <head>
-  <meta charset=\"UTF-8\">
-  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ryker - Invite Only</title>
   <style>
     body {
@@ -66,6 +66,9 @@
       border-radius: 12px;
       padding: 12px;
       border: 1px solid #2f3336;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
     }
 
     .post {
@@ -89,62 +92,70 @@
 </head>
 <body>
 
-<div class=\"header\">Ryker</div>
+<div class="header">Ryker</div>
 
-<div class=\"container\" id=\"app\">
-  <input type=\"text\" id=\"searchBar\" class=\"search-bar\" placeholder=\"Search Ryker\" oninput=\"searchPosts()\">
-  <textarea id=\"postContent\" rows=\"2\" placeholder=\"What's happening?\"></textarea>
-  <button onclick=\"submitPost()\">Post</button>
+<div class="container">
+  <input type="text" id="searchBar" class="search-bar" placeholder="Search Ryker" oninput="searchPosts()">
+  <textarea id="postContent" rows="2" placeholder="What's happening?"></textarea>
+  <button onclick="submitPost()">Post</button>
 
-  <div class=\"posts\" id=\"posts\"></div>
+  <div class="posts" id="posts"></div>
 </div>
 
 <script>
   const BIN_URL = 'https://api.jsonbin.io/v3/b/68050e088561e97a5003acd3';
-  const SECRET_KEY = '$2a$10$D8gBe5Go7MCnJAzZznsrK.nowl7FGqV32rXh1G3pOsL6ezYIM2t9C';
+  const SECRET_KEY = '$2a$10$.TYgk5WDiTRA/SeL4hyefOnwO2NdzcPbpow.4Vo6Noz4se8yLY8Zq';
 
   async function submitPost() {
-    const content = document.getElementById('postContent').value;
-    if (!content.trim()) return;
+    const content = document.getElementById('postContent').value.trim();
+    if (!content) return alert("You must write something first!");
 
-    const res = await fetch(BIN_URL, {
-      headers: { 'X-Master-Key': SECRET_KEY }
-    });
-    const data = await res.json();
+    try {
+      let res = await fetch(BIN_URL, { headers: { 'X-Master-Key': SECRET_KEY }});
+      let data = await res.json();
 
-    data.record.posts.unshift({ content, timestamp: new Date().toISOString() });
+      if (!data.record.posts) data.record.posts = [];
+      data.record.posts.unshift({ content, timestamp: new Date().toISOString() });
 
-    await fetch(BIN_URL, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json', 'X-Master-Key': SECRET_KEY },
-      body: JSON.stringify(data.record)
-    });
+      await fetch(BIN_URL, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'X-Master-Key': SECRET_KEY },
+        body: JSON.stringify(data.record)
+      });
 
-    document.getElementById('postContent').value = '';
-    loadPosts();
+      document.getElementById('postContent').value = '';
+      loadPosts();
+    } catch (error) {
+      console.error(error);
+      alert("Failed to post. Please try again.");
+    }
   }
 
   async function loadPosts() {
-    const postsContainer = document.getElementById('posts');
-    postsContainer.innerHTML = '';
+    try {
+      const postsContainer = document.getElementById('posts');
+      postsContainer.innerHTML = '';
 
-    const res = await fetch(BIN_URL, {
-      headers: { 'X-Master-Key': SECRET_KEY }
-    });
-    const data = await res.json();
+      const res = await fetch(BIN_URL, { headers: { 'X-Master-Key': SECRET_KEY }});
+      const data = await res.json();
 
-    data.record.posts.forEach(post => {
-      const postDiv = document.createElement('div');
-      postDiv.className = 'post';
-      postDiv.innerHTML = `<p>${post.content}</p><small>${new Date(post.timestamp).toLocaleString()}</small>`;
-      postsContainer.appendChild(postDiv);
-    });
+      if (!data.record.posts) return;
+
+      data.record.posts.forEach(post => {
+        const postDiv = document.createElement('div');
+        postDiv.className = 'post';
+        postDiv.innerHTML = `<p>${post.content}</p><small>${new Date(post.timestamp).toLocaleString()}</small>`;
+        postsContainer.appendChild(postDiv);
+      });
+    } catch (error) {
+      console.error(error);
+      alert("Failed to load posts.");
+    }
   }
 
   function searchPosts() {
     const query = document.getElementById('searchBar').value.toLowerCase();
-    const posts = document.querySelectorAll('.post');
-    posts.forEach(post => {
+    document.querySelectorAll('.post').forEach(post => {
       const text = post.innerText.toLowerCase();
       post.style.display = text.includes(query) ? 'flex' : 'none';
     });
@@ -155,3 +166,4 @@
 
 </body>
 </html>
+
