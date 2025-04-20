@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang=\"en\">
+<head>
+  <meta charset=\"UTF-8\">
+  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">
+  <title>Ryker - Invite Only</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #000;
+      color: #e7e9ea;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .header {
+      background-color: #16181c;
+      width: 100%;
+      padding: 12px;
+      text-align: center;
+      font-size: 28px;
+      border-bottom: 1px solid #2f3336;
+      font-weight: bold;
+    }
+
+    .container {
+      margin-top: 20px;
+      width: 100%;
+      max-width: 650px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    textarea, input {
+      padding: 12px;
+      border-radius: 20px;
+      border: 1px solid #2f3336;
+      resize: none;
+      outline: none;
+      background-color: #16181c;
+      color: #e7e9ea;
+    }
+
+    button {
+      background-color: #1d9bf0;
+      color: white;
+      padding: 12px;
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    button:hover {
+      background-color: #188cd8;
+    }
+
+    .posts {
+      margin-top: 10px;
+      background-color: #16181c;
+      border-radius: 12px;
+      padding: 12px;
+      border: 1px solid #2f3336;
+    }
+
+    .post {
+      border-bottom: 1px solid #2f3336;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .search-bar {
+      width: 100%;
+    }
+
+    img, video {
+      max-width: 100%;
+      border-radius: 12px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<div class=\"header\">Ryker</div>
+
+<div class=\"container\" id=\"app\">
+  <input type=\"text\" id=\"searchBar\" class=\"search-bar\" placeholder=\"Search Ryker\" oninput=\"searchPosts()\">
+  <textarea id=\"postContent\" rows=\"2\" placeholder=\"What's happening?\"></textarea>
+  <button onclick=\"submitPost()\">Post</button>
+
+  <div class=\"posts\" id=\"posts\"></div>
+</div>
+
+<script>
+  const BIN_URL = 'https://api.jsonbin.io/v3/b/68050e088561e97a5003acd3';
+  const SECRET_KEY = '$2a$10$D8gBe5Go7MCnJAzZznsrK.nowl7FGqV32rXh1G3pOsL6ezYIM2t9C';
+
+  async function submitPost() {
+    const content = document.getElementById('postContent').value;
+    if (!content.trim()) return;
+
+    const res = await fetch(BIN_URL, {
+      headers: { 'X-Master-Key': SECRET_KEY }
+    });
+    const data = await res.json();
+
+    data.record.posts.unshift({ content, timestamp: new Date().toISOString() });
+
+    await fetch(BIN_URL, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'X-Master-Key': SECRET_KEY },
+      body: JSON.stringify(data.record)
+    });
+
+    document.getElementById('postContent').value = '';
+    loadPosts();
+  }
+
+  async function loadPosts() {
+    const postsContainer = document.getElementById('posts');
+    postsContainer.innerHTML = '';
+
+    const res = await fetch(BIN_URL, {
+      headers: { 'X-Master-Key': SECRET_KEY }
+    });
+    const data = await res.json();
+
+    data.record.posts.forEach(post => {
+      const postDiv = document.createElement('div');
+      postDiv.className = 'post';
+      postDiv.innerHTML = `<p>${post.content}</p><small>${new Date(post.timestamp).toLocaleString()}</small>`;
+      postsContainer.appendChild(postDiv);
+    });
+  }
+
+  function searchPosts() {
+    const query = document.getElementById('searchBar').value.toLowerCase();
+    const posts = document.querySelectorAll('.post');
+    posts.forEach(post => {
+      const text = post.innerText.toLowerCase();
+      post.style.display = text.includes(query) ? 'flex' : 'none';
+    });
+  }
+
+  window.onload = loadPosts;
+</script>
+
+</body>
+</html>
